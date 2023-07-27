@@ -61,10 +61,13 @@ impl Arena {
                 )
                 .expect("unable to reply");
 
+                debug!("MY MIIIINT IS{:#?}", self.mint);
+                debug!("OWNER IS {:#?}", winner.owner);
+
                 msg::send(
                     self.mint,
                     MintAction::BattleResult {
-                        winner_id: winner.id,
+                        winner_id: winner.owner,
                     },
                     0,
                 )
@@ -72,6 +75,7 @@ impl Arena {
 
                 self.tournament_winners(winner.owner);
                 self.clean_state();
+
                 return;
             } else {
                 self.battles = self

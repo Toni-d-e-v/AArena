@@ -2,7 +2,7 @@
 
 use codec::{Decode, Encode};
 use gmeta::{InOut, Metadata};
-use gstd::{prelude::*, ActorId, CodeId, TypeInfo};
+use gstd::{debug, prelude::*, ActorId, CodeId, TypeInfo};
 
 const MAX_LEVEL: usize = 9;
 const MAX_STRENGTH: usize = 9;
@@ -25,7 +25,7 @@ pub struct InitialAttributes {
     pub stamina: u8,
 }
 
-#[derive(Encode, Decode, TypeInfo, Clone, Default)]
+#[derive(Encode, Decode, TypeInfo, Clone, Default, Debug)]
 pub struct CharacterAttributes {
     pub strength: u8,
     pub agility: u8,
@@ -35,7 +35,7 @@ pub struct CharacterAttributes {
     pub experience: u32,
 }
 
-#[derive(Encode, Decode, TypeInfo, Clone)]
+#[derive(Encode, Decode, TypeInfo, Clone, Debug)]
 pub enum AttributeChoice {
     Strength,
     Agility,
@@ -45,6 +45,7 @@ pub enum AttributeChoice {
 
 impl CharacterAttributes {
     pub fn increase_xp(&mut self) {
+        debug!("will i get here?");
         self.experience = self.experience.saturating_add(XP_GAIN[self.level as usize]);
     }
 
@@ -79,14 +80,14 @@ impl CharacterAttributes {
     }
 }
 
-#[derive(Encode, Decode, TypeInfo, Clone)]
+#[derive(Encode, Decode, TypeInfo, Clone, Debug)]
 pub struct CharacterInfo {
     pub id: ActorId,
     pub name: String,
     pub attributes: CharacterAttributes,
 }
 
-#[derive(Encode, Decode, TypeInfo, Clone)]
+#[derive(Encode, Decode, TypeInfo, Clone, Debug)]
 pub enum MintAction {
     CreateCharacter {
         code_id: CodeId,

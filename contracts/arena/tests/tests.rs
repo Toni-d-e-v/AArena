@@ -4,6 +4,7 @@ use gtest::{Program, System};
 use mint_io::{InitialAttributes, MintAction};
 
 const USER_ID: u64 = 10;
+const ARENA_ID: u64 = 2;
 
 #[test]
 fn game() {
@@ -22,6 +23,13 @@ fn game() {
     );
     arena.send(USER_ID, mint.id());
 
+    mint.send(
+        USER_ID,
+        MintAction::SetArena {
+            arena_id: (ARENA_ID.into()),
+        },
+    );
+
     let hash: [u8; 32] = system
         .submit_code("../../target/wasm32-unknown-unknown/release/character.wasm")
         .into();
@@ -38,6 +46,9 @@ fn game() {
         },
     };
     mint.send(USER_ID, payload.clone());
+    mint.send(USER_ID, payload.clone());
+    mint.send(USER_ID, payload.clone());
+
     mint.send(USER_ID, payload);
 
     arena.send(

@@ -1,14 +1,15 @@
 #![no_std]
 
+use gstd::ext::debug;
 use gstd::prog::ProgramGenerator;
-use gstd::{debug, msg, prelude::*, ActorId, CodeId};
+use gstd::{debug, exec, msg, prelude::*, ActorId, CodeId};
 use mint_io::{
     AttributeChoice, CharacterAttributes, CharacterInfo, InitialAttributes, MintAction, MintState,
 };
 
 type CharacterId = ActorId;
 
-#[derive(Default)]
+#[derive(Default, Debug)]
 struct Mint {
     characters: BTreeMap<CharacterId, CharacterInfo>,
     arena_contract: Option<ActorId>,
@@ -49,21 +50,23 @@ impl Mint {
         msg::reply(character, 0).expect("unable to reply");
     }
 
-    fn increase_xp(&mut self, owner_id: CharacterId) {
-        let caller = msg::source();
-
+    fn increase_xp(&mut self, caller_id: ActorId, target_id: ActorId) {
         assert!(self.arena_contract.is_some(), "arena contract is not set");
-
         assert!(
-            Some(caller) == self.arena_contract,
+            Some(caller_id) == self.arena_contract,
             "only the arena contract can call this fn"
         );
 
-        let character = self
+        let character_info = self
             .characters
-            .get_mut(&owner_id)
-            .expect("invalid owner_id");
-        character.attributes.increase_xp();
+            .get_mut(&target_id)
+            .expect("invalid owner id");
+
+        character_info.attributes.increase_xp();
+        debug!(
+            "CHARACTER EXP AFTER {:?}",
+            character_info.attributes.experience
+        );
     }
 
     fn set_arena(&mut self, arena_id: ActorId) {
@@ -90,6 +93,7 @@ impl Mint {
 
 #[no_mangle]
 unsafe extern "C" fn init() {
+    debug!("MY id is {:#?}", exec::program_id());
     let contract_owner = msg::source();
     MINT = Some(Mint {
         contract_owner,
@@ -99,10 +103,11 @@ unsafe extern "C" fn init() {
 
 #[no_mangle]
 extern "C" fn handle() {
+    debug!("TESTING HANDLE");
     let mint = unsafe { MINT.as_mut().unwrap() };
     let action: MintAction = msg::load().expect("unable to decode `MintAction`");
     let caller = msg::source();
-
+    debug!("ACTION IS {:?}", action);
     match action {
         MintAction::CreateCharacter {
             code_id,
@@ -112,7 +117,7 @@ extern "C" fn handle() {
             mint.create_character(code_id, name, attributes);
         }
         MintAction::CharacterInfo { owner_id } => mint.character_info(owner_id),
-        MintAction::BattleResult { winner_id } => mint.increase_xp(winner_id),
+        MintAction::BattleResult { winner_id } => mint.increase_xp(caller, winner_id),
         MintAction::SetArena { arena_id } => mint.set_arena(arena_id),
         MintAction::LevelUp { attr } => mint.level_up(caller, attr),
     }
